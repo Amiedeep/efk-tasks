@@ -3,14 +3,21 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 )
 
+var (
+	kibanaURL = "http://a4e5373dd69ea11eabb870260ab833aa-538123228.ap-south-1.elb.amazonaws.com:5601"
+	dashoard  = "eb857bd0-629e-11ea-8590-0bc89883db09"
+)
+
 func createFile(name string) (file *os.File) {
-	file, err := os.Create("dashboard.yaml")
+	file, err := os.Create(name)
 
 	if err != nil {
 		fmt.Println("Error creating file")
@@ -20,7 +27,7 @@ func createFile(name string) (file *os.File) {
 	return file
 }
 
-func httpCall(url string) (output *http.Response) {
+func httpGetCall(url string) (output *http.Response) {
 	output, err := http.Get(url)
 
 	if err != nil {
@@ -30,10 +37,11 @@ func httpCall(url string) (output *http.Response) {
 	return output
 }
 
-func GetDashboard() {
-	url := "https://url"
+func ImportDashboard() {
+	url := kibanaURL + "/api/kibana/dashboards/export?dashboard=" + dashoard
 
-	output := httpCall(url)
+	fmt.Println("URL: ", url)
+	output := httpGetCall(url)
 
 	file := createFile("dashboard.json")
 
@@ -41,6 +49,28 @@ func GetDashboard() {
 
 	if err != nil {
 		fmt.Println("Error copying file")
+		panic(err)
+	}
+}
+
+func ExportDashboard() {
+	url := kibanaURL + "/api/kibana/dashboards/import?force=true"
+	fmt.Println("URL: ", url)
+	dashboardFile, err := ioutil.ReadFile("dashboard.json")
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(dashboardFile))
+	req.Header.Set("kbn-xsrf", "true")
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	fmt.Println(resp.Status)
+
+	if err != nil {
+		fmt.Println("Error exporting dashboard")
+		fmt.Println(err.Error())
+
 		panic(err)
 	}
 }
