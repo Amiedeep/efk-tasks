@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	kibanaURL        = "http://a261f4ec7701211ea8cfb0a190e2ab7c-1627007188.ap-south-1.elb.amazonaws.com:5601"
-	dashoard         = "bc607e50-6db5-11ea-9e92-830448f2e139"
-	dashoardFileName = "dashboard.json"
+	kibanaURL        = "http://kibana_url:port"
+	dashoard         = "dashoboard_id"
+	dashoardFileName = "filename.json"
 )
 
 func createFile(name string) (file *os.File) {
@@ -72,6 +72,32 @@ func ImportDashboard() {
 
 	if err != nil {
 		fmt.Println("Error exporting dashboard")
+		fmt.Println(err.Error())
+
+		panic(err)
+	}
+}
+
+func DeleteSavedObject() {
+	objectType := "dashboard"
+	id := "dashoboard id"
+	// space := "default"
+	url := kibanaURL + "/api/saved_objects/" + objectType + "/" + id
+	// url := kibanaURL + "/s/" + space + "/api/saved_objects/" + objectType + "/" + id
+	fmt.Println("URL: ", url)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	req.Header.Set("kbn-xsrf", "true")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	fmt.Println(resp.Status)
+	// out, _ := ioutil.ReadAll(resp.Body)
+	// fmt.Println(string(out))
+
+	if err != nil {
+		fmt.Println("Error deleting object")
 		fmt.Println(err.Error())
 
 		panic(err)
