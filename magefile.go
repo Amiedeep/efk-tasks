@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	kibanaURL = "http://a4e5373dd69ea11eabb870260ab833aa-538123228.ap-south-1.elb.amazonaws.com:5601"
-	dashoard  = "eb857bd0-629e-11ea-8590-0bc89883db09"
+	kibanaURL        = "http://a261f4ec7701211ea8cfb0a190e2ab7c-1627007188.ap-south-1.elb.amazonaws.com:5601"
+	dashoard         = "bc607e50-6db5-11ea-9e92-830448f2e139"
+	dashoardFileName = "dashboard.json"
 )
 
 func createFile(name string) (file *os.File) {
@@ -37,13 +38,13 @@ func httpGetCall(url string) (output *http.Response) {
 	return output
 }
 
-func ImportDashboard() {
+func ExportDashboard() {
 	url := kibanaURL + "/api/kibana/dashboards/export?dashboard=" + dashoard
 
 	fmt.Println("URL: ", url)
 	output := httpGetCall(url)
 
-	file := createFile("dashboard.json")
+	file := createFile(dashoardFileName)
 
 	_, err := io.Copy(file, output.Body)
 
@@ -53,10 +54,10 @@ func ImportDashboard() {
 	}
 }
 
-func ExportDashboard() {
+func ImportDashboard() {
 	url := kibanaURL + "/api/kibana/dashboards/import?force=true"
 	fmt.Println("URL: ", url)
-	dashboardFile, err := ioutil.ReadFile("dashboard.json")
+	dashboardFile, err := ioutil.ReadFile(dashoardFileName)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(dashboardFile))
 	req.Header.Set("kbn-xsrf", "true")
@@ -66,6 +67,8 @@ func ExportDashboard() {
 	resp, err := client.Do(req)
 
 	fmt.Println(resp.Status)
+	// out, _ := ioutil.ReadAll(resp.Body)
+	// fmt.Println(string(out))
 
 	if err != nil {
 		fmt.Println("Error exporting dashboard")
